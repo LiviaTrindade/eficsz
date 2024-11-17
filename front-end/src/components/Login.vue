@@ -63,7 +63,10 @@ export default {
     <div class="circle additional2"></div>
     <div class="circle additional3"></div>
     
+    <!--Div Logo-->
+    <div class="logo-gabini"><img src="../assets/images/gabinipreto.png" alt=""></div>
 
+    
     <!-- Container principal -->
     <div class="container">
       <!-- Seção esquerda -->
@@ -163,6 +166,12 @@ body {
   bottom: 30%; 
   left: 10%; 
   background: linear-gradient(207deg, #683636 30.01%, #B8B8B8 68.84%); 
+}
+
+
+.logo-gabini {
+  position: relative; /* Adicionei esta linha */
+  z-index: 100; /* Ajuste para um valor mais alto */
 }
 
 /* Ajuste do tamanho e centralização do container */
