@@ -1,6 +1,4 @@
 <script>
-import axios from 'axios';
-
 export default {
   data() {
     return {
@@ -24,100 +22,40 @@ export default {
         cidade: '',
         estado: '',
       },
-      showAddressModal: false // Estado para controlar o modal de endereço
+      showAddressModal: false,
+      userPhoto: null,
     };
   },
   methods: {
-    // Função para buscar endereço com base no CEP
-    async buscarEndereco() {
-      const cep = this.address.cep.replace(/\D/g, '');
-      if (cep.length === 8) {
-        try {
-          const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
-          if (response.data && !response.data.erro) {
-            const data = response.data;
-            this.address.rua = data.logradouro || '';
-            this.address.bairro = data.bairro || '';
-            this.address.cidade = data.localidade || '';
-            this.address.estado = data.uf || '';
-          } else {
-            alert('CEP não encontrado.');
-            this.resetAddressFields();
-          }
-        } catch (error) {
-          console.error('Erro ao buscar o CEP:', error);
-          alert('Erro ao buscar o CEP. Tente novamente.');
-        }
-      }
-    },
-
-    // Função para lidar com a mudança de arquivo (upload de foto)
-    onFileChange(event) {
-      const file = event.target.files[0];
-      if (file) {
-        this.newUser.foto = file;
-      }
-    },
-
-    // Função para enviar os dados para a API
-    async submit() {
-      if (!this.validateForm()) {
-        alert('Preencha todos os campos obrigatórios.');
-        return;
-      }
-
-      // Validação de senha
-      if (this.newUser.senha !== this.newUser.confirmacaoSenha) {
-        alert('As senhas não coincidem.');
-        return;
-      }
-
-      const formData = new FormData();
-      // Adicionando os dados do usuário ao FormData
-      Object.keys(this.newUser).forEach(key => {
-        if (this.newUser[key]) formData.append(key, this.newUser[key]);
-      });
-
-      // Adicionando os dados de endereço ao FormData
-      Object.keys(this.address).forEach(key => {
-        formData.append(key, this.address[key]);
-      });
-
-      try {
-        // Enviando para o endpoint da API
-        const response = await axios.post('http://localhost:5000/api/usuario/registrar', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-
-        if (response.status === 201) {
-          alert('Registro realizado com sucesso!');
-          this.resetForm();
-          this.$router.push('/');
-        }
-      } catch (error) {
-        console.error('Erro ao registrar:', error);
-        alert('Erro ao registrar. Tente novamente.');
-      }
-    },
-
     // Função para abrir o modal de endereço
     openAddressModal() {
-      this.showAddressModal = true;
+      if (this.validatePersonalInfo()) {
+        this.showAddressModal = true;
+      } else {
+        alert('Preencha todos os campos antes de continuar.');
+      }
     },
 
-    // Função para fechar o modal de endereço
-    closeAddressModal() {
-      this.showAddressModal = false;
-    },
-
-    // Função para validar o formulário
-    validateForm() {
+    // Função para validar apenas os campos pessoais
+    validatePersonalInfo() {
       return (
         this.newUser.nome &&
         this.newUser.sobrenome &&
         this.newUser.email &&
+        this.newUser.username &&
+        this.newUser.nascimento &&
         this.newUser.senha &&
         this.newUser.confirmacaoSenha &&
+        this.newUser.telefone &&
+        this.newUser.cpf &&
+        this.newUser.senha === this.newUser.confirmacaoSenha
+      );
+    },
+
+    // Função para validar todos os campos
+    validateForm() {
+      return (
+        this.validatePersonalInfo() &&
         this.address.cep &&
         this.address.rua &&
         this.address.numero &&
@@ -127,7 +65,30 @@ export default {
       );
     },
 
-    // Função para resetar os campos do formulário
+    // Função para salvar os dados do usuário no localStorage
+    submit() {
+      if (!this.validateForm()) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+      }
+
+      // Armazenar os dados no localStorage
+      const userData = {
+        ...this.newUser,
+        endereco: { ...this.address }
+      };
+
+      // Salvando os dados como string JSON no localStorage
+      localStorage.setItem('usuarioRegistrado', JSON.stringify(userData));
+
+      alert('Registro realizado com sucesso!');
+
+      // Resetar o formulário após o registro
+      this.resetForm();
+      this.$router.push('/login');
+    },
+
+    // Função para resetar o formulário
     resetForm() {
       this.newUser = {
         nome: '',
@@ -141,11 +102,6 @@ export default {
         cpf: '',
         foto: null,
       };
-      this.resetAddressFields();
-    },
-
-    // Função para resetar os campos de endereço
-    resetAddressFields() {
       this.address = {
         cep: '',
         rua: '',
@@ -154,11 +110,34 @@ export default {
         cidade: '',
         estado: '',
       };
+      this.userPhoto = null;
     },
 
-    // Função para redirecionar para a página inicial
-    VoltarInicio() {
-      this.$router.push('/');
+    // Função para buscar o endereço usando a API ViaCEP
+    async buscarEndereco() {
+      const cep = this.address.cep.replace(/\D/g, ''); // Remove caracteres não numéricos
+
+      if (cep.length === 8) { // CEP válido tem 8 dígitos
+        try {
+          const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+          const data = await response.json();
+
+          if (data.erro) {
+            alert('CEP não encontrado!');
+          } else {
+            // Preenchendo os campos de endereço com os dados do ViaCEP
+            this.address.rua = data.logradouro || '';
+            this.address.bairro = data.bairro || '';
+            this.address.cidade = data.localidade || '';
+            this.address.estado = data.uf || '';
+          }
+        } catch (error) {
+          console.error('Erro ao buscar o endereço:', error);
+          alert('Erro ao buscar o endereço. Tente novamente.');
+        }
+      } else {
+        alert('CEP inválido! Certifique-se de digitar um CEP com 8 dígitos.');
+      }
     }
   }
 };

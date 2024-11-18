@@ -1,96 +1,110 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 
 const showDropdown = ref(false);
 const router = useRouter();
 
-// Estado para o login
+// Estado reativo para verificar se o usuário está logado
 const isLoggedIn = ref(false);
 
 // Função para alternar o menu dropdown (modo mobile)
 function toggleDropdown() {
-    showDropdown.value = !showDropdown.value;
+  showDropdown.value = !showDropdown.value;
 }
 
-// Verifica se o usuário está logado ao carregar a página
+// Função para verificar se o usuário está logado
+function checkLoginStatus() {
+  const userLoggedIn = localStorage.getItem('isLoggedIn');
+  isLoggedIn.value = userLoggedIn === 'true';
+}
+
+// Verifica o estado de login ao carregar a página
 onMounted(() => {
-    const userLoggedIn = localStorage.getItem('isLoggedIn');
-    if (userLoggedIn === 'true') {
-        isLoggedIn.value = true;
-    }
+  checkLoginStatus();
+});
+
+// Observa mudanças no localStorage para atualizar o estado de login
+watchEffect(() => {
+  checkLoginStatus();
 });
 
 // Função para logout
 function logout() {
-    localStorage.removeItem('isLoggedIn');
-    isLoggedIn.value = false;
-    router.push('/login');
+  localStorage.removeItem('isLoggedIn');
+  isLoggedIn.value = false;
+  router.push('/login');
 }
 
 // Redirecionar para a página de perfil
 function goToProfile() {
+  if (isLoggedIn.value) {
     router.push('/profile');
+  }
 }
 </script>
 
+
+
 <template>
     <nav class="w-[auto] h-[95px] flex-shrink-0 flex items-center justify-between px-12 navbar__styles">
-        <div class="flex items-center navbar__logo">
-            <img src="../assets/images/gabinipreto.png" alt="Logo" class="h-12 navbar__logo">
-        </div>
-
-        <!-- Menu normal -->
-        <ul class="items__nav hidden lg:flex">
-            <li class="items__menu"><a href="/" class="hover:text-blue-600">HOME</a></li>
-            <li class="items__menu"><a href="#" class="hover:text-blue-600">SALE</a></li>
-            <li class="items__menu"><a href="#" class="hover:text-blue-600">BUNDLE & SAVE</a></li>
-            <li class="items__menu"><a href="#" class="hover:text-blue-600">SHOP BY CATEGORY</a></li>
-            <li class="items__menu"><a href="#" class="hover:text-blue-600">SUPPORT</a></li>
-        </ul>
-
-        <!-- Links de login e cadastro ou perfil -->
-        <div class="flex items-center space-x-4 items__nav__signin__signup hidden lg:flex">
-            <template v-if="isLoggedIn">
-                <!-- Link para o perfil do usuário -->
-                <a href="#" @click="goToProfile" class="hover:text-blue-600 items__nav__sign">PERFIL</a>
-                <button @click="logout" class="text-white py-2 px-4 items__nav__signup">LOGOUT</button>
-            </template>
-            <template v-else>
-                <!-- Links para login e cadastro -->
-                <a href="/login" class="hover:text-blue-600 items__nav__sign">SIGN IN</a>
-                <div class="text__sign__signup">&nbsp;</div>
-                <a href="/registration" class="text-white py-2 px-4 items__nav__signup">SIGN UP FOR FREE</a>
-            </template>
-        </div>
-
-        <!-- Menu dropdown para mobile -->
-        <button @click="toggleDropdown" class="block lg:hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
+      <div class="flex items-center navbar__logo">
+        <img src="../assets/images/gabinipreto.png" alt="Logo" class="h-12 navbar__logo">
+      </div>
+  
+      <!-- Menu normal (desktop) -->
+      <ul class="items__nav hidden lg:flex">
+        <li class="items__menu"><a href="/" class="hover:text-blue-600">HOME</a></li>
+        <li class="items__menu"><a href="#" class="hover:text-blue-600">SALE</a></li>
+        <li class="items__menu"><a href="#" class="hover:text-blue-600">BUNDLE & SAVE</a></li>
+        <li class="items__menu"><a href="#" class="hover:text-blue-600">SHOP BY CATEGORY</a></li>
+        <li class="items__menu"><a href="#" class="hover:text-blue-600">SUPPORT</a></li>
+      </ul>
+  
+      <!-- Links de login/cadastro ou perfil (desktop) -->
+      <div class="flex items-center space-x-4 items__nav__signin__signup hidden lg:flex">
+        <template v-if="isLoggedIn">
+          <!-- Link para o perfil do usuário -->
+          <a @click="goToProfile" class="hover:text-blue-600 items__nav__sign cursor-pointer">PERFIL</a>
+          <button @click="logout" class="text-white py-2 px-4 items__nav__signup">LOGOUT</button>
+        </template>
+        <template v-else>
+          <!-- Links para login e cadastro -->
+          <a href="/login" class="hover:text-blue-600 items__nav__sign">SIGN IN</a>
+          <a href="/registration" class="text-white py-2 px-4 items__nav__signup">SIGN UP FOR FREE</a>
+        </template>
+      </div>
+  
+      <!-- Botão para abrir menu dropdown no mobile -->
+      <button @click="toggleDropdown" class="block lg:hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
     </nav>
-
-    <!-- Dropdown menu mobile -->
+  
+    <!-- Menu dropdown para mobile -->
     <div v-if="showDropdown" class="lg:hidden dropdown__menu">
-        <ul class="dropdown__items">
-            <li class="items"><a href="/" class="hover:text-blue-600">HOME</a></li>
-            <li class="items"><a href="#" class="hover:text-blue-600">SALE</a></li>
-            <li class="items"><a href="#" class="hover:text-blue-600">BUNDLE & SAVE</a></li>
-            <li class="items"><a href="#" class="hover:text-blue-600">SHOP BY CATEGORY</a></li>
-            <li class="items"><a href="#" class="hover:text-blue-600">SUPPORT</a></li>
-            <template v-if="isLoggedIn">
-                <li class="items"><a href="#" @click="goToProfile" class="hover:text-blue-600">PERFIL</a></li>
-                <li class="items"><button @click="logout" class="hover:text-blue-600">LOGOUT</button></li>
-            </template>
-            <template v-else>
-                <li class="items"><a href="/login" class="hover:text-blue-600">SIGN IN</a></li>
-                <li class="items"><a href="/registration" class="hover:text-blue-600">SIGN UP FOR FREE</a></li>
-            </template>
-        </ul>
+      <ul class="dropdown__items">
+        <li class="items"><a href="/" class="hover:text-blue-600">HOME</a></li>
+        <li class="items"><a href="#" class="hover:text-blue-600">SALE</a></li>
+        <li class="items"><a href="#" class="hover:text-blue-600">BUNDLE & SAVE</a></li>
+        <li class="items"><a href="#" class="hover:text-blue-600">SHOP BY CATEGORY</a></li>
+        <li class="items"><a href="#" class="hover:text-blue-600">SUPPORT</a></li>
+        <template v-if="isLoggedIn">
+          <li class="items"><a @click="goToProfile" class="hover:text-blue-600 cursor-pointer">PERFIL</a></li>
+          <li class="items"><button @click="logout" class="hover:text-blue-600">LOGOUT</button></li>
+        </template>
+        <template v-else>
+          <li class="items"><a href="/login" class="hover:text-blue-600">SIGN IN</a></li>
+          <li class="items"><a href="/registration" class="hover:text-blue-600">SIGN UP FOR FREE</a></li>
+        </template>
+      </ul>
     </div>
-</template>
+  </template>
+  
+  
+  
 
 
 <style scoped>

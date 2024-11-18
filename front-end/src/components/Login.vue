@@ -1,59 +1,47 @@
 <script>
-
-import axios from "axios";
-
 export default {
   data() {
     return {
-      username: "",
-      password: "",
+      username: '',
+      password: '',
       remember: false,
+      errorMessage: ''
     };
   },
   methods: {
-    // Função para lidar com o envio do formulário de login
-    async handleLogin() {
-      try {
-        // Enviando a solicitação para a API
-        const response = await axios.post('http://localhost:5000/api/usuario/login', {
-          username: this.username,
-          password: this.password,
-        });
-
-        // Verificando a resposta do servidor
-        if (response.status === 200 && response.data.token) {
-          alert("Login realizado com sucesso!");
-
-          // Armazenar o token com base na escolha de 'Lembrar-me'
-          if (this.remember) {
-            localStorage.setItem("authToken", response.data.token);
-          } else {
-            sessionStorage.setItem("authToken", response.data.token);
-          }
-
-          // Redirecionar para o dashboard após o login
-          this.$router.push("/dashboard");
-        } else {
-          alert("Credenciais inválidas.");
-        }
-      } catch (error) {
-        // Tratamento detalhado de erros
-        if (error.response && error.response.status === 401) {
-          alert("Credenciais incorretas. Verifique seu username e senha.");
-        } else {
-          console.error("Erro ao fazer login:", error);
-          alert("Erro ao fazer login. Tente novamente.");
-        }
-      }
-    },
-
     // Função para redirecionar para a página de registro
     redirectToRegister() {
-      this.$router.push("/register");
+      this.$router.push('/registration');
+    },
+
+    // Função para lidar com o login
+    handleLogin() {
+      // Busca os dados do usuário registrado no localStorage
+      const usuarioSalvo = localStorage.getItem('usuarioRegistrado');
+
+      if (usuarioSalvo) {
+        const usuario = JSON.parse(usuarioSalvo);
+
+        // Verifica se o username e senha correspondem aos dados salvos
+        if (usuario.username === this.username && usuario.senha === this.password) {
+          alert('Login realizado com sucesso!');
+
+          // Armazena a sessão se "Lembrar" estiver marcado
+          if (this.remember) {
+            localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
+          }
+
+          // Redireciona para a página de perfil após o login bem-sucedido
+          this.$router.push('/profile');
+        } else {
+          this.errorMessage = 'Username ou senha incorretos!';
+        }
+      } else {
+        this.errorMessage = 'Nenhum usuário registrado encontrado!';
+      }
     }
   }
 };
-
 </script>
 
 
