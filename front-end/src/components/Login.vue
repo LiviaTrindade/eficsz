@@ -1,6 +1,6 @@
 <script>
+
 import axios from "axios";
-import { ref } from 'vue';
 
 export default {
   data() {
@@ -14,37 +14,46 @@ export default {
     // Função para lidar com o envio do formulário de login
     async handleLogin() {
       try {
-        // Substituir o endpoint pela rota correta da API
-        const response = await axios.post('http://localhost:5000/api/login', {
+        // Enviando a solicitação para a API
+        const response = await axios.post('http://localhost:5000/api/usuario/login', {
           username: this.username,
           password: this.password,
         });
 
-        // Verificação da resposta do servidor
-        if (response.status === 200) {
+        // Verificando a resposta do servidor
+        if (response.status === 200 && response.data.token) {
           alert("Login realizado com sucesso!");
 
-          // Salvar token no localStorage se 'Lembrar' estiver marcado
-          if (this.remember && response.data.token) {
+          // Armazenar o token com base na escolha de 'Lembrar-me'
+          if (this.remember) {
             localStorage.setItem("authToken", response.data.token);
+          } else {
+            sessionStorage.setItem("authToken", response.data.token);
           }
 
-          // Redirecionar para o dashboard após login bem-sucedido
+          // Redirecionar para o dashboard após o login
           this.$router.push("/dashboard");
         } else {
           alert("Credenciais inválidas.");
         }
       } catch (error) {
-        console.error("Erro ao fazer login:", error);
-        alert("Erro ao fazer login. Tente novamente.");
+        // Tratamento detalhado de erros
+        if (error.response && error.response.status === 401) {
+          alert("Credenciais incorretas. Verifique seu username e senha.");
+        } else {
+          console.error("Erro ao fazer login:", error);
+          alert("Erro ao fazer login. Tente novamente.");
+        }
       }
     },
+
     // Função para redirecionar para a página de registro
     redirectToRegister() {
-      this.$router.push("/registration");
+      this.$router.push("/register");
     }
   }
 };
+
 </script>
 
 

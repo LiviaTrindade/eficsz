@@ -1,5 +1,4 @@
 <script>
-import { ref } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -15,7 +14,7 @@ export default {
         confirmacaoSenha: '',
         telefone: '',
         cpf: '',
-        foto: null
+        foto: null,
       },
       address: {
         cep: '',
@@ -23,9 +22,9 @@ export default {
         numero: '',
         bairro: '',
         cidade: '',
-        estado: ''
+        estado: '',
       },
-      showAddressModal: false // Estado para controlar o modal
+      showAddressModal: false // Estado para controlar o modal de endereço
     };
   },
   methods: {
@@ -52,17 +51,15 @@ export default {
       }
     },
 
-    // Função para abrir o modal de endereço
-    openAddressModal() {
-      this.showAddressModal = true;
+    // Função para lidar com a mudança de arquivo (upload de foto)
+    onFileChange(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.newUser.foto = file;
+      }
     },
 
-    // Função para fechar o modal de endereço
-    closeAddressModal() {
-      this.showAddressModal = false;
-    },
-
-    // Função para registrar o usuário
+    // Função para enviar os dados para a API
     async submit() {
       if (!this.validateForm()) {
         alert('Preencha todos os campos obrigatórios.');
@@ -76,21 +73,25 @@ export default {
       }
 
       const formData = new FormData();
+      // Adicionando os dados do usuário ao FormData
       Object.keys(this.newUser).forEach(key => {
         if (this.newUser[key]) formData.append(key, this.newUser[key]);
       });
+
+      // Adicionando os dados de endereço ao FormData
       Object.keys(this.address).forEach(key => {
         formData.append(key, this.address[key]);
       });
 
       try {
-        const response = await axios.post('/api/registrar', formData);
+        // Enviando para o endpoint da API
+        const response = await axios.post('http://localhost:5000/api/usuario/registrar', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
         if (response.status === 201) {
           alert('Registro realizado com sucesso!');
           this.resetForm();
-          this.closeAddressModal();
-
-          // Redireciona para a página inicial após o registro
           this.$router.push('/');
         }
       } catch (error) {
@@ -99,12 +100,24 @@ export default {
       }
     },
 
-    // Função para validar o formulário antes de enviar
+    // Função para abrir o modal de endereço
+    openAddressModal() {
+      this.showAddressModal = true;
+    },
+
+    // Função para fechar o modal de endereço
+    closeAddressModal() {
+      this.showAddressModal = false;
+    },
+
+    // Função para validar o formulário
     validateForm() {
       return (
         this.newUser.nome &&
         this.newUser.sobrenome &&
         this.newUser.email &&
+        this.newUser.senha &&
+        this.newUser.confirmacaoSenha &&
         this.address.cep &&
         this.address.rua &&
         this.address.numero &&
@@ -126,7 +139,7 @@ export default {
         confirmacaoSenha: '',
         telefone: '',
         cpf: '',
-        foto: null
+        foto: null,
       };
       this.resetAddressFields();
     },
@@ -139,13 +152,8 @@ export default {
         numero: '',
         bairro: '',
         cidade: '',
-        estado: ''
+        estado: '',
       };
-    },
-
-    // Função para redirecionar para a página de registro
-    redirectToRegister() {
-      this.$router.push('/register');
     },
 
     // Função para redirecionar para a página inicial
@@ -155,6 +163,7 @@ export default {
   }
 };
 </script>
+
 
 
 
@@ -513,7 +522,7 @@ button:disabled {
 }
 
 .modal-content span{
-  border-bottom: 5px solid black;
+  border-bottom: 5px solid rgb(255, 255, 255);
 }
 
 .modal-content {
@@ -526,7 +535,7 @@ button:disabled {
 }
 
 .modal-content h2 {
-  color: #070707;
+  color: #ffffff;
   margin-bottom: 20px;
   text-align: center;
 }
